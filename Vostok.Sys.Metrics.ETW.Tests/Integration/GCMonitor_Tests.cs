@@ -12,6 +12,7 @@ using Vostok.Sys.Metrics.ETW.TestProcess;
 namespace Vostok.Sys.Metrics.ETW.Tests.Integration
 {
     [TestFixture]
+    [Explicit]
     public class GCMonitor_Tests
     {
         [SetUp]
