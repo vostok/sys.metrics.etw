@@ -32,9 +32,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ILRepack" Version="2.0.16" />
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="2.0.19" />
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="System.Reflection.Metadata" Version="1.6.0" />
   </ItemGroup>
+
+  <Target Name="RepackAssemblies" AfterTargets="Build">
+    <ItemGroup>
+      <MergeAssemblies Include="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />
+      <MergeAssemblies Include="$(ProjectDir)$(OutputPath)*.dll" />
+    </ItemGroup>
+    <Message Text="$(AssemblyName)" Importance="high" />
+    <Exec WorkingDirectory="$(ProjectDir)$(OutputPath)" Command="&quot;$(ILRepack)&quot; /internalize /log:ilrepack.log /out:$(AssemblyName).dll @(MergeAssemblies->'%(FileName)%(Extension)', ' ')" />
+    <ItemGroup>
+      <MergeAssemblies Remove="$(ProjectDir)$(OutputPath)$(AssemblyName).dll" />
+    </ItemGroup>
+    <Delete Files="@(MergeAssemblies)" />
+  </Target>
   
 </Project>
