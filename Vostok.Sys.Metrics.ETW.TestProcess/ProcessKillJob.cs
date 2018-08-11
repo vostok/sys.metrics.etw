@@ -12,6 +12,8 @@ namespace Vostok.Sys.Metrics.ETW.TestProcess
 
         public ProcessKillJob()
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return;
             jobHandle = CreateJobObject(IntPtr.Zero, IntPtr.Zero);
             if (jobHandle == IntPtr.Zero)
             {
@@ -58,12 +60,16 @@ namespace Vostok.Sys.Metrics.ETW.TestProcess
 
         public void Dispose()
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return;
             CloseHandle(jobHandle);
             Marshal.FreeHGlobal(jobObjectInfoPtr);
         }
 
         public void AddProcess(Process process)
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return;
             if (process == null)
             {
                 throw new ArgumentNullException("process");
@@ -73,6 +79,8 @@ namespace Vostok.Sys.Metrics.ETW.TestProcess
 
         public void AddProcess(IntPtr processHandle)
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return;
             if (!AssignProcessToJobObject(jobHandle, processHandle))
                 throw new Win32Exception();
         }
