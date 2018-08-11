@@ -1,0 +1,17 @@
+notests *default:
+  build:
+    target: Vostok.Sys.Metrics.ETW.sln
+    configuration: NoTests
+    tool:
+      name: dotnet
+
+  install:
+    - Vostok.Sys.Metrics.ETW/bin/Release/netstandard2.0/Vostok.Sys.Metrics.ETW.dll
+
+  deps:
+    - vostok.devtools
+
+full-build > notests:
+  build:
+    target: Vostok.Sys.Metrics.ETW.sln
+    configuration: Release
