@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Vostok.Sys.Metrics.ETW.TestProcess
@@ -15,15 +17,31 @@ namespace Vostok.Sys.Metrics.ETW.TestProcess
         public TestProcessHandle(bool gcOnStart=true)
         {
             var pathToAssembly = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var path = Path.Combine(pathToAssembly, "Vostok.Sys.Metrics.ETW.TestProcess.exe");
-            Process = Process.Start(new ProcessStartInfo(path)
+            var file = new FileInfo(Directory.GetFiles(pathToAssembly, "Vostok.Sys.Metrics.ETW.TestProcess.???").First());
+            string executable, args = string.Empty;
+            switch (file.Extension)
             {
-                CreateNoWindow = true,
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false
-            });
+                case ".exe":
+                    executable = file.FullName;
+                    break;
+                case ".dll":
+                    executable = "dotnet";
+                    args = file.Name;
+                    break;
+                default:
+                    throw new Exception("Unknown TestProcess file extension");
+            }
+
+            Process = Process.Start(
+                new ProcessStartInfo(executable, args)
+                {
+                    CreateNoWindow = true,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                });
+
             killJob = new ProcessKillJob();
             killJob.AddProcess(Process);            
             Warmup();

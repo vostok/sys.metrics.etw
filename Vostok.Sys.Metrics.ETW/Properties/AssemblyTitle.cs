@@ -1,10 +1,10 @@
 using System.Reflection;
 
 [assembly: AssemblyTitle(@"
-Commit: e41990a43fe749c1a470742a7d3080f5d150cf54 
+Commit: c9e305870c047c0f4de60d13acaa5b86d753df09 
 Author: epeshk 
-Date: 2018-08-11 15:58:13 +0500 
+Date: 2018-08-11 16:36:10 +0500 
 Ref names:  (HEAD -> master, origin/master, origin/HEAD)
-Build date: 2018-08-11T16:32:25.3688861+05:00")]
+Build date: 2018-08-11T17:38:29.2490948+05:00")]
 
-[assembly: AssemblyInformationalVersion("0.0.1-e41990a4")]
+[assembly: AssemblyInformationalVersion("0.0.1-c9e30587")]

@@ -6,7 +6,7 @@
   <PropertyGroup>
     <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">netcoreapp2.1</TargetFrameworks>
     <LangVersion>7.2</LangVersion>
-    <TargetFramework>net471</TargetFramework>
+    <TargetFrameworks>net471;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,5 +21,10 @@
     <ProjectReference Include="..\Vostok.Sys.Metrics.ETW.TestProcess\Vostok.Sys.Metrics.ETW.TestProcess.csproj" />
     <ProjectReference Include="..\Vostok.Sys.Metrics.ETW\Vostok.Sys.Metrics.ETW.csproj" />
   </ItemGroup>
+  
+  <Target Name="CopyTestProcessConfig" AfterTargets="Build" Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
+    <Copy SourceFiles="..\Vostok.Sys.Metrics.ETW.TestProcess\$(OutputPath)Vostok.Sys.Metrics.ETW.TestProcess.runtimeconfig.dev.json" DestinationFolder="$(OutputPath)"/>
+    <Copy SourceFiles="..\Vostok.Sys.Metrics.ETW.TestProcess\$(OutputPath)Vostok.Sys.Metrics.ETW.TestProcess.runtimeconfig.json" DestinationFolder="$(OutputPath)"/>
+  </Target>
 
 </Project>
