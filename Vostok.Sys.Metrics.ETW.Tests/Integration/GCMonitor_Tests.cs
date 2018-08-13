@@ -36,12 +36,12 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
         {
             using (var testProcess = new TestProcessHandle())
             {
-                using (var firstM = GCMonitor.StartForProcess(testProcess.Process))
+                using (var firstM = GCMonitor.StartForProcess(testProcess.Process.Id))
                 {
                     var firstO = Substitute.For<IObserver<GCInfo>>();
                     firstM.Subscribe(firstO);
 
-                    using (var secondM = GCMonitor.StartForProcess(testProcess.Process))
+                    using (var secondM = GCMonitor.StartForProcess(testProcess.Process.Id))
                     {
                         var secondO = Substitute.For<IObserver<GCInfo>>();
                         secondM.Subscribe(secondO);
@@ -76,12 +76,12 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
         {
             using (var testProcess = new TestProcessHandle())
             {
-                using (var monitor = GCMonitor.StartForProcess(testProcess.Process))
+                using (var monitor = GCMonitor.StartForProcess(testProcess.Process.Id))
                 {
                     var observer = Substitute.For<IObserver<GCInfo>>();
                     monitor.Subscribe(observer);
 
-                    using (var monitor2 = GCMonitor.StartForProcess(testProcess.Process))
+                    using (var monitor2 = GCMonitor.StartForProcess(testProcess.Process.Id))
                     {
                         var observer2 = Substitute.For<IObserver<GCInfo>>();
                         monitor2.Subscribe(observer2);
@@ -135,7 +135,7 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
                 for (var i = 0; i < count; i++)
                 {
                     observers[i] = Substitute.For<IObserver<GCInfo>>();
-                    monitors[i] = GCMonitor.StartForProcess(testProcess.Process);
+                    monitors[i] = GCMonitor.StartForProcess(testProcess.Process.Id);
                     monitors[i].Subscribe(observers[i]);
                 }
 
@@ -172,7 +172,7 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
         public void Catches_gc_events()
         {
             using (var testProcess = new TestProcessHandle())
-            using (var monitor = GCMonitor.StartForProcess(testProcess.Process))
+            using (var monitor = GCMonitor.StartForProcess(testProcess.Process.Id))
             {
                 var observer = Substitute.For<IObserver<GCInfo>>();
                 observer.When(o => o.OnNext(Arg.Any<GCInfo>())).Do(ci => DumpGCInfo(ci.Arg<GCInfo>()));

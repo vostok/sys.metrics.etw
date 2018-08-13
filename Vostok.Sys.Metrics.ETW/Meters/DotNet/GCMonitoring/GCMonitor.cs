@@ -103,9 +103,9 @@ namespace Vostok.Sys.Metrics.ETW.Meters.DotNet.GCMonitoring
             }
         }
 
-        public static GCMonitor StartForProcess(Process process)
+        public static GCMonitor StartForProcess(int pid)
         {
-            return Create(process.Id);
+            return Create(pid);
         }
 
         public static GCMonitor StartForAllProcesses()
