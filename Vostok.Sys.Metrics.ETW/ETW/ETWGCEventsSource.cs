@@ -2,29 +2,33 @@ using System;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
+using Microsoft.Diagnostics.Tracing.Session;
 using Vostok.Sys.Metrics.ETW.ETW.Model;
 
 namespace Vostok.Sys.Metrics.ETW.ETW
 {
-    internal class ETWGCEventsSource : IGCEventsSource
+    internal class ETWGCEventsSource : ETWEventsSource, IGCEventsSource
     {
-        private readonly Func<TraceEvent, bool> shouldProcess;
-        private readonly IETWSessionManager manager;
-        private ETWSession session;
-
         public ETWGCEventsSource(
             IETWSessionManager manager,
             Func<TraceEvent, bool> shouldProcess = null)
+        : base(manager, shouldProcess)
         {
-            this.shouldProcess = shouldProcess;
-            this.manager = manager;
         }
 
-        private void SetupEvents()
+        protected override void SetupEvents(ETWTraceEventSource traceEventSource)
         {
-            var clr = session.GetSession().Source.Clr;
+            var clr = traceEventSource.Clr;
             clr.GCStart += OnGCStart;
             clr.GCStop += OnGCEnd;
+        }
+
+        protected override void EnableProviders(TraceEventSession traceEventSession)
+        {
+            traceEventSession.EnableProvider(
+                ClrTraceEventParser.ProviderGuid,
+                TraceEventLevel.Verbose,
+                (ulong) ClrTraceEventParser.Keywords.GC);
         }
 
         private void OnGCStart(GCStartTraceData obj)
@@ -49,51 +53,7 @@ namespace Vostok.Sys.Metrics.ETW.ETW
             // If exception happens here, all session.Process() will stop
         }
 
-        public void Dispose()
-        {
-            session?.Dispose();
-        }
-
         public event Action<ETWEventClrGCStart> GCStart;
         public event Action<ETWEventClrGCEnd> GCStop;
-        public void Start()
-        {
-            if (session != null)
-            {
-                return;
-            }
-
-            session = manager.GetSession();
-            try
-            {
-                session.GetSession().EnableProvider(
-                    ClrTraceEventParser.ProviderGuid,
-                    TraceEventLevel.Verbose,
-                    (ulong) ClrTraceEventParser.Keywords.GC);
-            }
-            catch
-            {
-                // this means that we attached to session, not created it.
-                // TODO For some reason enabling providers on attached sessions is not allowed in c# wrapper
-                // TODO Should ask at PerfView repo why is it implemented this way
-            }
-
-            // add filtering hook
-            if (shouldProcess != null)
-            {
-                session.GetSession().Source.AddDispatchHook((ev, next) =>
-                {
-                    if (!shouldProcess(ev))
-                    {
-                        return;
-                    }
-
-                    next(ev);
-                });
-            }
-
-            SetupEvents();
-            session.StartProcessing();
-        }
     }
 }
