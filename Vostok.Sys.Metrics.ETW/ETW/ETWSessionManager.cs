@@ -6,7 +6,7 @@ namespace Vostok.Sys.Metrics.ETW.ETW
     internal class ETWSessionManager : IETWSessionManager
     {
         public static readonly ETWSessionManager Default = new ETWSessionManager();
-        public const string ETWSessionName = "KonturWinSysMetrics_v1";
+        public const string ETWSessionName = "VostokSysMetrics_v1";
 
         public ETWSession GetSession()
         {
