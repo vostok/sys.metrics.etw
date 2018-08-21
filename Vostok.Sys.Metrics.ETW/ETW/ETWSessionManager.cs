@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Microsoft.Diagnostics.Tracing.Session;
 
 namespace Vostok.Sys.Metrics.ETW.ETW
@@ -8,21 +9,15 @@ namespace Vostok.Sys.Metrics.ETW.ETW
         public static readonly ETWSessionManager Default = new ETWSessionManager();
         public const string ETWSessionName = "KonturWinSysMetrics_v1";
 
-        public ETWSession GetSession()
-        {
-            EnsureElevatedProcess();
-            var session = new TraceEventSession(
-                ETWSessionName,
-                TraceEventSessionOptions.NoRestartOnCreate);
-            // The session is reused and should remain after application exit
-            session.StopOnDispose = false;
-            return new ETWSession(session);
-        }
+        private Lazy<ETWSession> cachedSession = new Lazy<ETWSession>(() => ObtainSession(), LazyThreadSafetyMode.PublicationOnly);
+
+        public ETWSession GetSession() => cachedSession.Value;
 
         public void KillSession(Action<Exception> onError = null)
         {
             try
             {
+                cachedSession = new Lazy<ETWSession>(() => ObtainSession(), LazyThreadSafetyMode.PublicationOnly);
                 var handle = new TraceEventSession(ETWSessionName, TraceEventSessionOptions.Attach);
                 handle.Dispose();
             }
@@ -30,6 +25,16 @@ namespace Vostok.Sys.Metrics.ETW.ETW
             {
                 onError?.Invoke(ex);
             }
+        }
+
+        private static ETWSession ObtainSession()
+        {
+            EnsureElevatedProcess();
+            var session = new TraceEventSession(
+                ETWSessionName,
+                TraceEventSessionOptions.NoRestartOnCreate) {StopOnDispose = false};
+            // The session is reused and should remain after application exit
+            return new ETWSession(session);
         }
 
         private static void EnsureElevatedProcess()

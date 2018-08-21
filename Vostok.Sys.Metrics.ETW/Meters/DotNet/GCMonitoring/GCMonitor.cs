@@ -88,6 +88,9 @@ namespace Vostok.Sys.Metrics.ETW.Meters.DotNet.GCMonitoring
 
         public void Dispose()
         {
+            gcEventsSource.GCStart -= OnGcStart;
+            gcEventsSource.GCStop -= OnGcStop;
+
             if (disposeSource)
             {
                 gcEventsSource.Dispose();
@@ -123,7 +126,7 @@ namespace Vostok.Sys.Metrics.ETW.Meters.DotNet.GCMonitoring
             var source = new ETWGCEventsSource(
                 etwSessionManager ?? ETWSessionManager.Default,
                 filter);
-            return new GCMonitor(source, new GCEventsMerger(), true);
+            return new GCMonitor(source, new GCEventsMerger(), false);
         }
     }
 }
