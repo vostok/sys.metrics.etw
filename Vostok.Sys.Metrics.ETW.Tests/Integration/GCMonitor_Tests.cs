@@ -13,7 +13,7 @@ using Vostok.Sys.Metrics.ETW.TestProcess;
 namespace Vostok.Sys.Metrics.ETW.Tests.Integration
 {
     [TestFixture]
-    //[Explicit]
+    [Explicit]
     public class GCMonitor_Tests
     {
         [SetUp]
@@ -125,9 +125,6 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
         [TestCase(8)] // Max ETW sessions per producer
         [TestCase(64)] // Max ETW sessions per host
         //This cases sometimes fail
-                [TestCase(256)] 
-                [TestCase(512)]
-                [TestCase(2048)]
         public void Can_create_many_gc_monitors(int count)
         {
             using (var testProcess = new TestProcessHandle())
@@ -152,8 +149,7 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
                         {
                             try
                             {
-                                observer.ReceivedCalls().Any(x => IsInducedGc(x.GetArguments()[0] as GCInfo, 2)).Should().BeTrue();
-                                // observer.Received(1).OnNext(Arg.Is<GCInfo>(i => IsInducedGc(i, 2)));
+                                observer.Received(1).OnNext(Arg.Is<GCInfo>(i => IsInducedGc(i, 2)));
                                 receivedCount++;
                             }
                             catch

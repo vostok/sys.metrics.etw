@@ -30,6 +30,7 @@ namespace Vostok.Sys.Metrics.ETW.ETW
         private static ETWSession ObtainSession()
         {
             EnsureElevatedProcess();
+            Console.WriteLine("Obtain");
             var session = new TraceEventSession(
                 ETWSessionName,
                 TraceEventSessionOptions.NoRestartOnCreate) {StopOnDispose = false};

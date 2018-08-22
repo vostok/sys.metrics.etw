@@ -9,11 +9,14 @@ namespace Vostok.Sys.Metrics.ETW.ETW
 {
     internal class ETWGCEventsSource : ETWEventsSource, IGCEventsSource
     {
+        private readonly Func<TraceEvent, bool> shouldProcess;
+
         public ETWGCEventsSource(
             IETWSessionManager manager,
             Func<TraceEvent, bool> shouldProcess = null)
-        : base(manager, shouldProcess)
+        : base(manager)
         {
+            this.shouldProcess = shouldProcess ?? (e => true);
         }
 
         protected override void SetupEvents(ETWTraceEventSource traceEventSource)
@@ -35,6 +38,8 @@ namespace Vostok.Sys.Metrics.ETW.ETW
         {
             try
             {
+                if (!shouldProcess(obj))
+                    return;
                 GCStart?.Invoke(new ETWEventClrGCStart(obj));
             }
             catch { }
@@ -44,8 +49,11 @@ namespace Vostok.Sys.Metrics.ETW.ETW
 
         private void OnGCEnd(GCEndTraceData obj)
         {
+           
             try
             {
+                if (!shouldProcess(obj))
+                   return;
                 GCStop?.Invoke(new ETWEventClrGCEnd(obj));
             }
             catch { }

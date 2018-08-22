@@ -6,15 +6,12 @@ namespace Vostok.Sys.Metrics.ETW.ETW
 {
     internal abstract class ETWEventsSource : IEventsSource
     {
-        private readonly Func<TraceEvent, bool> shouldProcess;
         private readonly IETWSessionManager manager;
         private ETWSession session;
 
         protected ETWEventsSource(
-            IETWSessionManager manager,
-            Func<TraceEvent, bool> shouldProcess = null)
+            IETWSessionManager manager)
         {
-            this.shouldProcess = shouldProcess;
             this.manager = manager;
         }
 
@@ -43,20 +40,6 @@ namespace Vostok.Sys.Metrics.ETW.ETW
                 // this means that we attached to session, not created it.
                 // TODO For some reason enabling providers on attached sessions is not allowed in c# wrapper
                 // TODO Should ask at PerfView repo why is it implemented this way
-            }
-
-            // add filtering hook
-            if (shouldProcess != null)
-            {
-                session.GetSession().Source.AddDispatchHook((ev, next) =>
-                {
-                    if (!shouldProcess(ev))
-                    {
-                        return;
-                    }
-
-                    next(ev);
-                });
             }
 
             SetupEvents(session.GetSession().Source);
