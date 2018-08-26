@@ -13,7 +13,7 @@ using Vostok.Sys.Metrics.ETW.TestProcess;
 namespace Vostok.Sys.Metrics.ETW.Tests.Integration
 {
     [TestFixture]
-    [Explicit]
+    //[Explicit]
     public class GCMonitor_Tests
     {
         [SetUp]
@@ -80,11 +80,15 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
                 using (var monitor = GCMonitor.StartForProcess(testProcess.Process.Id))
                 {
                     var observer = Substitute.For<IObserver<GCInfo>>();
+                    
+                    observer.When(o => o.OnError(Arg.Any<Exception>())).Do(ci => Console.WriteLine(ci.Arg<Exception>()));
                     monitor.Subscribe(observer);
 
                     using (var monitor2 = GCMonitor.StartForProcess(testProcess.Process.Id))
                     {
                         var observer2 = Substitute.For<IObserver<GCInfo>>();
+                        
+                        observer2.When(o => o.OnError(Arg.Any<Exception>())).Do(ci => Console.WriteLine(ci.Arg<Exception>()));
                         monitor2.Subscribe(observer2);
                         
                         testProcess.MakeGC(2);
@@ -110,6 +114,8 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
             using (var monitor = GCMonitor.StartForCurrentProcess())
             {
                 var observer = Substitute.For<IObserver<GCInfo>>();
+                
+                observer.When(o => o.OnError(Arg.Any<Exception>())).Do(ci => Console.WriteLine(ci.Arg<Exception>()));
                 monitor.Subscribe(observer);
 
                 GC.Collect(2, GCCollectionMode.Forced, true);
@@ -125,44 +131,42 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
         [TestCase(8)] // Max ETW sessions per producer
         [TestCase(64)] // Max ETW sessions per host
         //This cases sometimes fail
+        //        [TestCase(256)] 
+        //        [TestCase(512)]
         public void Can_create_many_gc_monitors(int count)
         {
+            for (var y = 0; y < 100; ++y)
             using (var testProcess = new TestProcessHandle())
             {
                 var monitors = new GCMonitor[count];
                 var observers = new IObserver<GCInfo>[count];
+                var received = 0;
                 for (var i = 0; i < count; i++)
                 {
                     observers[i] = Substitute.For<IObserver<GCInfo>>();
+                    observers[i].When(o => o.OnNext(Arg.Any<GCInfo>())).Do(
+                        ci =>
+                        {
+                            var gc = ci.Arg<GCInfo>();
+                            Console.WriteLine(gc.Reason);
+                            if (!IsInducedGc(gc, 2))
+                                return;
+                            Interlocked.Increment(ref received);
+                        });
+                    observers[i].When(o => o.OnError(Arg.Any<Exception>())).Do(ci => Console.WriteLine(ci.Arg<Exception>()));
                     monitors[i] = GCMonitor.StartForProcess(testProcess.Process.Id);
                     monitors[i].Subscribe(observers[i]);
                 }
 
                 testProcess.MakeGC(2);
-                var received = new List<int>();
                 try
                 {
-                    TestHelpers.ShouldPassIn(() =>
-                    {
-                        var receivedCount = 0;
-                        foreach (var observer in observers)
-                        {
-                            try
-                            {
-                                observer.Received(1).OnNext(Arg.Is<GCInfo>(i => IsInducedGc(i, 2)));
-                                receivedCount++;
-                            }
-                            catch
-                            {
-                            }
-                        }
-                        received.Add(receivedCount);
-                        receivedCount.Should().Be(observers.Length);
-                    }, 10.Seconds(), 100.Milliseconds());
+                    var expected = observers.Length;
+                    TestHelpers.ShouldPassIn(() => received.Should().Be(expected), 10.Seconds(), 100.Milliseconds());
                 }
                 finally
                 {
-                    Console.WriteLine($"Called: {received.Count}. Received: {string.Join(",", received)}.");
+                    Console.WriteLine($"Received: {received}.");
                 }
             }
         }
@@ -175,6 +179,7 @@ namespace Vostok.Sys.Metrics.ETW.Tests.Integration
             {
                 var observer = Substitute.For<IObserver<GCInfo>>();
                 observer.When(o => o.OnNext(Arg.Any<GCInfo>())).Do(ci => DumpGCInfo(ci.Arg<GCInfo>()));
+                observer.When(o => o.OnError(Arg.Any<Exception>())).Do(ci => Console.WriteLine(ci.Arg<Exception>()));
                 monitor.Subscribe(observer);
                 var depth = 2;
 

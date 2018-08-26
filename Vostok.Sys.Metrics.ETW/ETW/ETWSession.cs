@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Diagnostics.Tracing.Session;
@@ -62,7 +63,19 @@ namespace Vostok.Sys.Metrics.ETW.ETW
 
         private void StartProcessingInternal()
         {
-            session.Source.Process();
+            try
+            {
+                session.Source.Process();
+            }
+            catch (COMException e)
+            {
+                Console.WriteLine(e);
+                Console.WriteLine(e.ErrorCode);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         private async Task StartTimeSynchronizer(CancellationToken token)
@@ -74,7 +87,10 @@ namespace Vostok.Sys.Metrics.ETW.ETW
                 {
                     session.Source.SynchronizeClock();
                 }
-                catch {}
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
                 await Task.Delay(syncPeriod, token).ConfigureAwait(false);
             }
         }
